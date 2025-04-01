@@ -1,0 +1,66 @@
+flowchart TB
+    subgraph "Application Layer"
+        API[API Services] --> |"OpenTelemetry\nSDK"| OtelColl
+        WebApp[Web Applications] --> |"OpenTelemetry\nSDK"| OtelColl
+        DB[(Databases)]
+        API --> DB
+    end
+
+    subgraph "Instrumentation Layer"
+        OtelColl[OpenTelemetry\nCollector]
+        Promtail[Promtail\nLog Agent]
+        
+        API -.-> |"Logs"| Promtail
+        WebApp -.-> |"Logs"| Promtail
+        
+        OtelColl --> |"Metrics"| Prometheus
+        OtelColl --> |"Traces"| Tempo
+        Promtail --> Loki
+    end
+
+    subgraph "Storage Layer"
+        Prometheus[(Prometheus\nTSDB)]
+        Loki[(Loki\nLogs Storage)]
+        Tempo[(Tempo\nTraces Storage)]
+    end
+
+    subgraph "Visualization Layer"
+        Grafana[Grafana Dashboard]
+        
+        Grafana --> Prometheus
+        Grafana --> Loki
+        Grafana --> Tempo
+        
+        subgraph "Dashboards"
+            APIDash[API Performance\nDashboard]
+            ErrorDash[Error Analysis\nDashboard]
+            SLODash[SLO Tracking\nDashboard]
+        end
+        
+        Grafana --- APIDash
+        Grafana --- ErrorDash
+        Grafana --- SLODash
+    end
+
+    subgraph "Alerting & Response"
+        AlertManager[Alert Manager]
+        Prometheus --> AlertManager
+        AlertManager --> |"Notifications"| Engineers[Engineering Team]
+        AlertManager --> |"Triggers"| RunBooks[Automated\nRunbooks]
+    end
+
+    %% Integration between systems
+    Prometheus -.-> |"Exemplar links\nto traces"| Tempo
+    Loki -.-> |"TraceID links\nto traces"| Tempo
+    
+    classDef app fill:#f9f,stroke:#333,stroke-width:1px
+    classDef collectors fill:#bbf,stroke:#333,stroke-width:1px
+    classDef storage fill:#ddd,stroke:#333,stroke-width:1px
+    classDef visualization fill:#bfb,stroke:#333,stroke-width:1px
+    classDef alerting fill:#fcb,stroke:#333,stroke-width:1px
+    
+    class API,WebApp,DB app
+    class OtelColl,Promtail collectors
+    class Prometheus,Loki,Tempo storage
+    class Grafana,APIDash,ErrorDash,SLODash visualization
+    class AlertManager,RunBooks,Engineers alerting

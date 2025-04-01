@@ -1,0 +1,38 @@
+groups:
+  - name: api_alerts
+    rules:
+      - alert: APIHighErrorRate
+        expr: sum by (job, route) (rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / sum by (job, route) (rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.route }}"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+          
+      - alert: APISlowResponses
+        expr: histogram_quantile(0.95, sum by (job, route, le) (rate(http_server_requests_seconds_bucket[5m]))) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow API responses on {{ $labels.route }}"
+          description: "95th percentile response time is {{ $value | humanizeDuration }} over the last 5 minutes"
+          
+      - alert: HighDatabaseLatency
+        expr: histogram_quantile(0.95, sum by (job, le) (rate(database_query_duration_seconds_bucket[5m]))) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database query latency"
+          description: "95th percentile database query time is {{ $value | humanizeDuration }} over the last 5 minutes"
+          
+      - alert: ExternalAPIDegradation
+        expr: histogram_quantile(0.95, sum by (job, api_name, le) (rate(external_api_call_duration_seconds_bucket[5m]))) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "External API degradation detected for {{ $labels.api_name }}"
+          description: "95th percentile call time is {{ $value | humanizeDuration }} over the last 5 minutes"
