@@ -81,10 +81,11 @@ services:
       - ./config/grafana/provisioning:/etc/grafana/provisioning
       - grafana_data:/var/lib/grafana
     environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
-      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+      - GF_AUTH_ANONYMOUS_ENABLED=false  # Disable anonymous access
+      - GF_SECURITY_ADMIN_USER=admin  # Keep default admin user
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Keep default password
+      - GF_AUTH_DISABLE_LOGIN_FORM=false  # Enable login form
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor  # Keep feature toggle if needed
     ports:
       - "3000:3000"
     networks:
@@ -107,8 +108,8 @@ services:
       - ./config/otel-collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     command: --config=/etc/otel-collector-config.yaml
     ports:
-      - "4317:4317"  # OTLP gRPC receiver
-      - "4318:4318"  # OTLP HTTP receiver
+      - "50051:4317"  # OTLP gRPC receiver
+      - "50052:4318"  # OTLP HTTP receiver
       - "8888:8888"  # metrics endpoint
     networks:
       - observability
