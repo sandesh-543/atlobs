@@ -1,0 +1,5 @@
+[
+    { "targets": ["sample-app:8000"], "labels": { "job": "sample-api" } },
+    { "targets": ["new-api:8080"], "labels": { "job": "new-api" } }
+  ]
+  

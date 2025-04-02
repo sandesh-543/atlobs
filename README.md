@@ -1,17 +1,17 @@
 # **Observability Solution for API Debugging**
 
-This repository contains a **comprehensive observability solution** designed to enhance the debugging experience for engineering teams. It addresses common challenges such as **slow, manual, and inconsistent debugging processes**, which often rely heavily on experienced engineers.  
+This repository contains a **comprehensive observability solution** designed to enhance the debugging experience for engineering teams. It addresses common challenges such as **slow, manual, and inconsistent debugging processes**, which often rely heavily on experienced engineers.
 
-## **Solution Overview**  
+## **Solution Overview**
 
-This solution implements a modern observability stack with:  
-- **Prometheus** – Metrics collection and alerting  
-- **Loki** – Log aggregation and querying  
-- **Tempo** – Distributed tracing  
-- **Grafana** – Unified visualization  
-- **OpenTelemetry** – Standardized instrumentation  
+This solution implements a modern observability stack with:
+- **Prometheus** – Metrics collection and alerting
+- **Loki** – Log aggregation and querying
+- **Tempo** – Distributed tracing
+- **Grafana** – Unified visualization
+- **OpenTelemetry** – Standardized instrumentation
 
-## **Key Features**  
+## **Key Features**
 
 ✅ **Unified Dashboard** – Integrated view of **metrics, logs, and traces**  
 ✅ **Correlated Data** – **TraceIDs link logs, metrics, and traces** for seamless debugging  
@@ -19,65 +19,92 @@ This solution implements a modern observability stack with:
 ✅ **Proactive Alerting** – **Predefined alert rules** for high error rates & latency spikes  
 ✅ **Guided Debugging** – Pre-built **queries & workflows** for common issues  
 ✅ **Low Overhead** – Efficient instrumentation with **~2-5ms per request latency impact**  
+✅ **Automatic API Discovery** – New API endpoints are **automatically detected** and monitored in Prometheus without manual updates  
 
-## **Setup Instructions**  
+## **Setup Instructions**
 
-1. **Clone this repository**  
+1. **Clone this repository**
    ```bash
    git clone https://github.com/yourusername/obsatl.git
    cd obsatl
    ```
-2. **Start the observability stack**  
+2. **Start the observability stack**
    ```bash
    docker-compose up -d
    ```
-3. **Start the sample application**  
+3. **Start the sample application**
    ```bash
    docker-compose -f docker-compose.sample-app.yaml up -d
    ```
-4. **Generate sample load**  
+4. **Generate sample load**
    ```bash
    ./scripts/demo-load.sh
    ```
-5. **Access Grafana**  
+5. **Access Grafana**
    - Open [http://localhost:3000](http://localhost:3000)  
    - Login with `admin/admin`  
 
-## **Debugging & Troubleshooting**  
+## **Automatic API Monitoring**
 
-### **How to Investigate an API Issue?**  
-- **Step 1:** Check the **API Performance Dashboard** → Look for **error rate spikes or high latency**  
-- **Step 2:** Navigate to **Trace Explorer** → Filter by **TraceID** to track slow or failing requests  
-- **Step 3:** Jump to **Loki Logs** → Use the same TraceID to view **corresponding logs**  
-- **Step 4:** If an alert was triggered, check **AlertManager** logs for further diagnosis  
+New API endpoints are **automatically added** to Prometheus without modifying `prometheus.yml`.
 
----
+### **How it Works:**
+- A **`targets.json`** file dynamically updates the list of API endpoints.
+- A **Python script (`update_targets.py`)** allows easy registration of new APIs.
+- Prometheus reads `targets.json` and **immediately starts monitoring new endpoints**.
 
-## **Alerting Setup (Prometheus & AlertManager)**  
-
-The system automatically triggers **alerts when critical conditions occur**:  
-
-| **Alert Name**    | **Condition**                                      | **Severity** | **Threshold** |
-|-------------------|--------------------------------------------------|-------------|--------------|
-| **High Error Rate**  | More than **5% API errors** over 5 minutes  | 🔴 Critical | `rate(http_server_requests_seconds_count{status!~"2.."}[5m]) > 0.05` |
-| **High Latency** | p95 latency exceeds **1 second** for 3 intervals | 🟡 Warning  | `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1` |
-
-Modify alert rules in [`config/alertmanager/alerts.yml`](config/alertmanager/alerts.yml) if needed.  
-
----
-
-## **Directory Structure**  
-
+### **Adding a New API to Monitoring:**
+Run the following command and enter the API details:
+```bash
+python3 update_targets.py
 ```
-/config         → Configuration files for all observability components  
-/sample-app     → Sample application with OpenTelemetry instrumentation  
-/docs          → Documentation, diagrams, and architecture details  
-/scripts       → Utility scripts for setup and demo  
+Example input:
+```
+Enter new API hostname (e.g., new-api): api-service
+Enter API port (e.g., 8080): 8080
+```
+✅ **Prometheus will automatically start monitoring the new API!**
+
+To apply changes, reload Prometheus without restarting:
+```bash
+curl -X POST http://localhost:9090/-/reload
 ```
 
+## **Debugging & Troubleshooting**
+
+### **How to Investigate an API Issue?**
+- **Step 1:** Check the **API Performance Dashboard** → Look for **error rate spikes or high latency**
+- **Step 2:** Navigate to **Trace Explorer** → Filter by **TraceID** to track slow or failing requests
+- **Step 3:** Jump to **Loki Logs** → Use the same TraceID to view **corresponding logs**
+- **Step 4:** If an alert was triggered, check **AlertManager** logs for further diagnosis
+
 ---
 
-## **Dashboard Access**  
+## **Alerting Setup (Prometheus & AlertManager)**
+
+The system automatically triggers **alerts when critical conditions occur**:
+
+| **Alert Name**       | **Condition**                                      | **Severity** | **Threshold** |
+|----------------------|--------------------------------------------------|-------------|--------------|
+| **High Error Rate**  | More than **5% API errors** over 5 minutes       | 🔴 Critical | `rate(http_server_requests_seconds_count{status!~"2.."}[5m]) > 0.05` |
+| **High Latency**     | p95 latency exceeds **1 second** for 3 intervals | 🟡 Warning  | `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1` |
+
+Modify alert rules in [`config/alertmanager/alerts.yml`](config/alertmanager/alerts.yml) if needed.
+
+---
+
+## **Directory Structure**
+
+```
+/config         → Configuration files for all observability components
+/sample-app     → Sample application with OpenTelemetry instrumentation
+/docs          → Documentation, diagrams, and architecture details
+/scripts       → Utility scripts for setup and demo
+```
+
+---
+
+## **Dashboard Access**
 
 - 🔍 **[API Performance Dashboard](http://localhost:3000/d/api-performance/api-performance-dashboard)**  
 - 🔴 **[Error Analysis Dashboard](http://localhost:3000/d/error-analysis/error-analysis-dashboard)**  
