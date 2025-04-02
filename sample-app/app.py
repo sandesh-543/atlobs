@@ -17,6 +17,22 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.trace.sampling import ParentBasedTraceIdRatio
 from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  
+from opentelemetry.instrumentation.requests import RequestsInstrumentor  
+from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor  
+from fastapi import FastAPI  
+
+app = FastAPI()
+
+# Instrument FastAPI (for tracing API requests)
+FastAPIInstrumentor().instrument_app(app)
+
+# Instrument Requests (for tracing outgoing API calls)
+RequestsInstrumentor().instrument()
+
+# Instrument PostgreSQL (for tracing database queries)
+Psycopg2Instrumentor().instrument()
+
 
 # Configure OpenTelemetry
 resource = Resource(attributes={

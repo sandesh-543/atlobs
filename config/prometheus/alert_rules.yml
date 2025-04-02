@@ -2,37 +2,47 @@ groups:
   - name: api_alerts
     rules:
       - alert: APIHighErrorRate
-        expr: sum by (job, route) (rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / sum by (job, route) (rate(http_server_requests_seconds_count[5m])) > 0.05
-        for: 2m
+        expr: sum by (job, route) (rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+              / (sum by (job, route) (rate(http_server_requests_seconds_count[5m])) + 1e-10) > 0.05
+        for: 3m
         labels:
           severity: warning
         annotations:
           summary: "High error rate on {{ $labels.route }}"
           description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
-          
+          impact: "May lead to degraded API experience"
+          action: "Investigate recent deployments, logs, and database failures"
+
       - alert: APISlowResponses
         expr: histogram_quantile(0.95, sum by (job, route, le) (rate(http_server_requests_seconds_bucket[5m]))) > 1
-        for: 2m
+        for: 3m
         labels:
           severity: warning
         annotations:
           summary: "Slow API responses on {{ $labels.route }}"
           description: "95th percentile response time is {{ $value | humanizeDuration }} over the last 5 minutes"
-          
+          impact: "Increased user latency, possible service bottleneck"
+          action: "Check application logs and database queries for performance issues"
+
       - alert: HighDatabaseLatency
         expr: histogram_quantile(0.95, sum by (job, le) (rate(database_query_duration_seconds_bucket[5m]))) > 0.5
-        for: 2m
+        for: 3m
         labels:
           severity: warning
         annotations:
           summary: "High database query latency"
           description: "95th percentile database query time is {{ $value | humanizeDuration }} over the last 5 minutes"
-          
+          impact: "May cause slow API response times"
+          action: "Analyze slow queries, check DB load, and consider indexing optimizations"
+
       - alert: ExternalAPIDegradation
-        expr: histogram_quantile(0.95, sum by (job, api_name, le) (rate(external_api_call_duration_seconds_bucket[5m]))) > 1
-        for: 2m
+        expr: sum by (api_name) (rate(external_api_errors_total[5m]))
+              / (sum by (api_name) (rate(external_api_calls_total[5m])) + 1e-10) > 0.02
+        for: 3m
         labels:
           severity: warning
         annotations:
           summary: "External API degradation detected for {{ $labels.api_name }}"
-          description: "95th percentile call time is {{ $value | humanizeDuration }} over the last 5 minutes"
+          description: "More than 2% of external API calls are failing over the last 5 minutes"
+          impact: "May cause errors or delays in dependent services"
+          action: "Verify API provider status and consider failover strategies"
