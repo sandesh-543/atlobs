@@ -10,7 +10,7 @@ route:
   routes:
     - receiver: 'web.hook'
       matchers:
-        - severity=warning
+        - severity="warning"
       group_wait: 10s
 
 receivers:
@@ -21,4 +21,7 @@ receivers:
 
 inhibit_rules:
   - source_matchers:
-    - severity
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ['alertname', 'job']

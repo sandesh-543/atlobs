@@ -14,6 +14,10 @@ ingester:
 compactor:
   compaction:
     block_retention: 24h
+  metrics_generator:
+    processors:
+      - service-graphs
+      - span-metrics
 
 storage:
   trace:
@@ -23,9 +27,3 @@ storage:
     pool:
       max_workers: 100
       queue_depth: 10000
-
-overrides:
-  metrics_generator:
-    processors:
-      - service-graphs
-      - span-metrics
