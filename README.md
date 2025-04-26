@@ -86,10 +86,8 @@ The system automatically triggers **alerts when critical conditions occur**:
 
 | **Alert Name**       | **Condition**                                      | **Severity** | **Threshold** |
 |----------------------|--------------------------------------------------|-------------|--------------|
-| **High Error Rate**  | More than **5% API errors** over 5 minutes       | 🔴 Critical | `rate(http_server_requests_seconds_count{status!~"2.."}[5m]) > 0.05` |
-| **High Latency**     | p95 latency exceeds **1 second** for 3 intervals | 🟡 Warning  | `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1` |
-
-Modify alert rules in [`config/alertmanager/alerts.yml`](config/prometheus/alert_rules.yml) if needed.
+| **High Error Rate**  | More than **5% API errors** over 5 minutes       | Critical | `rate(http_server_requests_seconds_count{status!~"2.."}[5m]) > 0.05` |
+| **High Latency**     | p95 latency exceeds **1 second** for 3 intervals | Warning  | `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1` |
 
 ---
 
